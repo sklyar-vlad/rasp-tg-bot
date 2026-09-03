@@ -11,7 +11,6 @@ import (
 	"github.com/sklyar-vlad/rasp-tg-bot/schedule"
 )
 
-// HandleCallback — главный роутер callback-запросов
 func HandleCallback(bot *tgbotapi.BotAPI, cb *tgbotapi.CallbackQuery) {
 	data := cb.Data
 	chatID := cb.Message.Chat.ID
@@ -21,7 +20,6 @@ func HandleCallback(bot *tgbotapi.BotAPI, cb *tgbotapi.CallbackQuery) {
 	}()
 
 	switch {
-	// === Обработка настроек уведомлений (если кнопки еще остались в меню) ===
 	case data == "notify_today_morning":
 		config.UpdateScheduleTime(config.ModeCustomToday, "08:00")
 		bot.Send(tgbotapi.NewMessage(chatID, "✅ Настройка сохранена: расписание будет приходить сегодня в 08:00"))
@@ -34,7 +32,6 @@ func HandleCallback(bot *tgbotapi.BotAPI, cb *tgbotapi.CallbackQuery) {
 		config.UpdateScheduleTime(config.ModeDisabled, "")
 		bot.Send(tgbotapi.NewMessage(chatID, "🔕 Уведомления о расписании выключены"))
 
-	// === Существующая логика расписания ===
 	case data == "today":
 		sendDayByOffset(bot, chatID, 0)
 	case data == "tomorrow":
@@ -47,7 +44,6 @@ func HandleCallback(bot *tgbotapi.BotAPI, cb *tgbotapi.CallbackQuery) {
 	}
 }
 
-// sendDayByOffset — для кнопок "Сегодня" и "Завтра"
 func sendDayByOffset(bot *tgbotapi.BotAPI, chatID int64, offsetDays int) {
 	targetDate := time.Now().AddDate(0, 0, offsetDays)
 	dayKey := weekdayToKey(targetDate.Weekday())
@@ -55,10 +51,7 @@ func sendDayByOffset(bot *tgbotapi.BotAPI, chatID int64, offsetDays int) {
 	_, targetWeek := targetDate.ISOWeek()
 	_, currentWeek := time.Now().ISOWeek()
 	weekDiff := targetWeek - currentWeek
-	
-	// Используем академическую четность из пакета schedule (если она экспортирована) 
-	// или дублируем логику, если isEvenWeek не экспортирована. 
-	// Для надежности используем проверку через schedule.GetScheduleForWeek, передавая расчет.
+
 	isEven := isEvenAcademicWeek()
 	if weekDiff%2 != 0 {
 		isEven = !isEven
@@ -84,7 +77,6 @@ func sendDayByOffset(bot *tgbotapi.BotAPI, chatID int64, offsetDays int) {
 	}
 }
 
-// sendWeekMenu — для кнопки "Неделя"
 func sendWeekMenu(bot *tgbotapi.BotAPI, chatID int64) {
 	blocks := schedule.BuildWeekBlocks()
 	if err := schedule.SendWeekBlocks(bot, chatID, blocks); err != nil {
@@ -92,7 +84,6 @@ func sendWeekMenu(bot *tgbotapi.BotAPI, chatID int64) {
 	}
 }
 
-// sendDayWithNav — для кнопок навигации ◀️ ▶️
 func sendDayWithNav(bot *tgbotapi.BotAPI, chatID int64, dayKey string) {
 	sched := schedule.GetSchedule()
 	day, ok := sched[dayKey]
@@ -125,10 +116,7 @@ func sendDayWithNav(bot *tgbotapi.BotAPI, chatID int64, dayKey string) {
 	}
 }
 
-// --- Вспомогательные функции ---
-
 func isEvenAcademicWeek() bool {
-	// Та же якорная дата, что и в schedule/data.go
 	startDate := time.Date(2026, 9, 1, 0, 0, 0, 0, time.Local)
 	daysPassed := int(time.Since(startDate).Hours() / 24)
 	academicWeek := (daysPassed / 7) + 1
@@ -137,13 +125,20 @@ func isEvenAcademicWeek() bool {
 
 func weekdayToKey(wd time.Weekday) string {
 	switch wd {
-	case time.Monday: return "monday"
-	case time.Tuesday: return "tuesday"
-	case time.Wednesday: return "wednesday"
-	case time.Thursday: return "thursday"
-	case time.Friday: return "friday"
-	case time.Saturday: return "saturday"
-	default: return "sunday"
+	case time.Monday:
+		return "monday"
+	case time.Tuesday:
+		return "tuesday"
+	case time.Wednesday:
+		return "wednesday"
+	case time.Thursday:
+		return "thursday"
+	case time.Friday:
+		return "friday"
+	case time.Saturday:
+		return "saturday"
+	default:
+		return "sunday"
 	}
 }
 

@@ -10,8 +10,8 @@ type NotifyMode string
 
 const (
 	ModeDisabled        NotifyMode = "disabled"
-	ModeCustomToday     NotifyMode = "custom_today"      // Произвольное время сегодня
-	ModeCustomYesterday NotifyMode = "custom_yesterday"  // Произвольное время накануне
+	ModeCustomToday     NotifyMode = "custom_today"     // Произвольное время сегодня
+	ModeCustomYesterday NotifyMode = "custom_yesterday" // Произвольное время накануне
 )
 
 type Settings struct {

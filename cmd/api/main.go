@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-	// Загружаем настройки (создаст файл, если его нет)
 	config.LoadSettings()
 
 	botInstance, err := tgbotapi.NewBotAPI(config.BotToken)
@@ -21,7 +20,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Запускаем всё параллельно
 	admin.StartConsoleListener(botInstance)
 	notifications.StartScheduler(botInstance)
 

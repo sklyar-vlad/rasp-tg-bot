@@ -4,7 +4,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o bot-app .
+RUN CGO_ENABLED=0 GOOS=linux go build -o bot-app ./cmd/api
 
 # RUN STAGE
 FROM alpine:latest

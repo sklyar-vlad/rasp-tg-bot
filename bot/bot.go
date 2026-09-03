@@ -16,16 +16,14 @@ func Start(bot *tgbotapi.BotAPI) {
 
 	for update := range updates {
 		if !isAllowed(update) {
+			handlers.HandleMessageFromGuest(bot, update.Message)
 			continue
 		}
-		
+
 		if update.Message != nil {
 			handlers.HandleMessage(bot, update.Message)
-
-			// ✅ Обработка нажатий на Reply-кнопки
 			handlers.HandleAction(bot, update.Message)
 
-			// Обработка слэш-команд
 			switch update.Message.Text {
 			case "/start":
 				handlers.HandleStart(bot, update.Message)
@@ -41,7 +39,6 @@ func Start(bot *tgbotapi.BotAPI) {
 			}
 		}
 
-		// Inline-кнопки (остались для навигации ◀️ ▶️ внутри расписания, если вы их оставили)
 		if update.CallbackQuery != nil {
 			handlers.HandleCallback(bot, update.CallbackQuery)
 		}

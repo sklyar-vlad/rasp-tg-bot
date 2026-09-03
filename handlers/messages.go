@@ -7,8 +7,11 @@ import (
 )
 
 func HandleMessage(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
-	// Логируем сообщения только от главного пользователя
 	if msg.From.ID == config.MainUserID && msg.Text != "" {
 		admin.LogMessage(msg.From.UserName, msg.Text)
 	}
+}
+
+func HandleMessageFromGuest(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "❌ Отказано в доступе"))
 }

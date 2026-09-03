@@ -66,13 +66,12 @@ func HandleSettings(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	bot.Send(m)
 }
 
-// HandleSetTime обрабатывает команду /time
 func HandleSetTime(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, args string) {
 	args = strings.TrimSpace(args)
 
 	if args == "off" || args == "выкл" {
 		config.UpdateScheduleTime(config.ModeDisabled, "")
-		notifications.ReloadScheduler(bot) // <-- ПЕРЕЗАПУСК ПЛАНИРОВЩИКА
+		notifications.ReloadScheduler(bot)
 		bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "🔕 Уведомления о расписании выключены."))
 		return
 	}
@@ -96,28 +95,23 @@ func HandleSetTime(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, args string) {
 		return
 	}
 
-	// 1. Сохраняем новые настройки в память и в settings.json
 	config.UpdateScheduleTime(mode, timeStr)
-	
-	// 2. 🔥 ГЛАВНЫЙ ФИКС: Пересобираем cron-задачи на лету без перезапуска бота
 	notifications.ReloadScheduler(bot)
 
 	dayWord := "сегодня"
 	if mode == config.ModeCustomYesterday {
 		dayWord = "накануне"
 	}
-	
+
 	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("✅ Сохранено! Расписание будет приходить %s в %s.", dayWord, timeStr)))
 }
 
 func isValidTimeFormat(t string) bool {
-	// Очень простая проверка: должно быть 5 символов, двоеточие на 3-м месте, цифры
 	if len(t) != 5 || t[2] != ':' {
 		return false
 	}
 	hh := t[0:2]
 	mm := t[3:5]
-	// Можно добавить проверку на диапазон 00-23 и 00-59, но для простоты оставим так
 	return isDigits(hh) && isDigits(mm)
 }
 
@@ -142,7 +136,6 @@ func HandleAction(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 		HandleSettings(bot, msg)
 	}
 }
-
 
 func HandleHelp(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	text := "Используй /start для вызова меню.\nИспользуй /time для настройки уведомлений."

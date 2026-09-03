@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/robfig/cron/v3"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/robfig/cron/v3"
 
 	"github.com/sklyar-vlad/rasp-tg-bot/config"
 	"github.com/sklyar-vlad/rasp-tg-bot/schedule"
@@ -40,7 +40,7 @@ func rebuildCron(bot *tgbotapi.BotAPI) {
 	// 3. Добавляем задачу для расписания
 	if settings.NotifyMode != config.ModeDisabled && settings.CustomTime != "" {
 		cronExpr := timeToCron(settings.CustomTime)
-		
+
 		var jobFunc func()
 		switch settings.NotifyMode {
 		case config.ModeCustomToday:
@@ -84,7 +84,7 @@ func timeToCron(timeStr string) string {
 		return fmt.Sprintf("%s %s * * *", parts[1], parts[0])
 	}
 	// Fallback на 08:00 (тоже 5 полей)
-	return "0 8 * * *" 
+	return "0 8 * * *"
 }
 func ReloadScheduler(bot *tgbotapi.BotAPI) {
 	rebuildCron(bot)
@@ -114,13 +114,13 @@ func sendScheduleForTomorrow(bot *tgbotapi.BotAPI) {
 	_, targetWeek := targetDate.ISOWeek()
 	_, currentWeek := time.Now().ISOWeek()
 	weekDiff := targetWeek - currentWeek
-	
+
 	// Академическая четность
 	startDate := time.Date(2026, 9, 1, 0, 0, 0, 0, time.Local)
 	daysPassed := int(time.Since(startDate).Hours() / 24)
 	academicWeek := (daysPassed / 7) + 1
 	isEven := academicWeek%2 == 0
-	
+
 	if weekDiff%2 != 0 {
 		isEven = !isEven
 	}
@@ -149,24 +149,38 @@ func sendDailyCustomMessage(bot *tgbotapi.BotAPI) {
 
 func todayKey() string {
 	switch time.Now().Weekday() {
-	case time.Monday: return "monday"
-	case time.Tuesday: return "tuesday"
-	case time.Wednesday: return "wednesday"
-	case time.Thursday: return "thursday"
-	case time.Friday: return "friday"
-	case time.Saturday: return "saturday"
-	default: return "sunday"
+	case time.Monday:
+		return "monday"
+	case time.Tuesday:
+		return "tuesday"
+	case time.Wednesday:
+		return "wednesday"
+	case time.Thursday:
+		return "thursday"
+	case time.Friday:
+		return "friday"
+	case time.Saturday:
+		return "saturday"
+	default:
+		return "sunday"
 	}
 }
 
 func weekdayToKey(wd time.Weekday) string {
 	switch wd {
-	case time.Monday: return "monday"
-	case time.Tuesday: return "tuesday"
-	case time.Wednesday: return "wednesday"
-	case time.Thursday: return "thursday"
-	case time.Friday: return "friday"
-	case time.Saturday: return "saturday"
-	default: return "sunday"
+	case time.Monday:
+		return "monday"
+	case time.Tuesday:
+		return "tuesday"
+	case time.Wednesday:
+		return "wednesday"
+	case time.Thursday:
+		return "thursday"
+	case time.Friday:
+		return "friday"
+	case time.Saturday:
+		return "saturday"
+	default:
+		return "sunday"
 	}
 }

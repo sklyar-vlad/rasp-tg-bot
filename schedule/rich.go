@@ -31,7 +31,8 @@ func BuildDayMarkdown(day DaySchedule, label string) string {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(title);sb.WriteString("\n\n")
+	sb.WriteString(title)
+	sb.WriteString("\n\n")
 	sb.WriteString("| Пара | Занятие | Аудитория |\n| :--- | :--- | :--- |\n")
 	for _, ev := range day.Events {
 		sb.WriteString(fmt.Sprintf("| **%s** | %s | %s |\n", ev.Time, ev.Subject, ev.Location))
@@ -62,12 +63,12 @@ type RichMessageBlocks struct {
 
 type Block struct {
 	Type       string   `json:"type"`
-	Summary    string   `json:"summary,omitempty"`    // Заголовок для details
-	Blocks     []Block  `json:"blocks,omitempty"`     // Вложенные блоки для details
-	Cells      [][]Cell `json:"cells,omitempty"`      // Ячейки для table
+	Summary    string   `json:"summary,omitempty"` // Заголовок для details
+	Blocks     []Block  `json:"blocks,omitempty"`  // Вложенные блоки для details
+	Cells      [][]Cell `json:"cells,omitempty"`   // Ячейки для table
 	IsBordered bool     `json:"is_bordered,omitempty"`
 	IsStriped  bool     `json:"is_striped,omitempty"`
-	Text       string   `json:"text,omitempty"`       // Текст для paragraph (без Markdown!)
+	Text       string   `json:"text,omitempty"` // Текст для paragraph (без Markdown!)
 }
 
 type Cell struct {
@@ -105,7 +106,7 @@ func BuildWeekBlocks() []Block {
 
 		var cells [][]Cell
 		cells = append(cells, []Cell{{Text: "Пара"}, {Text: "Занятие"}, {Text: "Аудитория"}})
-		
+
 		for _, ev := range day.Events {
 			cells = append(cells, []Cell{
 				{Text: ev.Time},
@@ -114,7 +115,7 @@ func BuildWeekBlocks() []Block {
 			})
 		}
 
-		// Оборачиваем таблицу в выпадающий список. 
+		// Оборачиваем таблицу в выпадающий список.
 		blocks = append(blocks, Block{
 			Type:    "details",
 			Summary: fmt.Sprintf("%s · %d пар", day.Name, len(day.Events)),
