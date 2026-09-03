@@ -2,17 +2,16 @@ package schedule
 
 import "time"
 
-// Event представляет одну пару или окно
 type Event struct {
-	Time     string // например: "1 · 11:40" или "-"
-	Subject  string // например: "пр. · Экономика"
-	Location string // например: "9-213 · Володин"
-	IsWindow bool   // если это окно, форматируем иначе
+	Time     string
+	Subject  string
+	Location string
+	IsWindow bool  
 }
 
 type DaySchedule struct {
-	Name   string  // "Понедельник"
-	Events []Event // Список событий дня
+	Name   string 
+	Events []Event
 }
 
 var oddWeek = map[string]DaySchedule{
