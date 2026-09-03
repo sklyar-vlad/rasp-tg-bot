@@ -18,8 +18,7 @@ func Start(bot *tgbotapi.BotAPI) {
 		if !isAllowed(update) {
 			continue
 		}
-
-		// Текстовые сообщения
+		
 		if update.Message != nil {
 			handlers.HandleMessage(bot, update.Message)
 

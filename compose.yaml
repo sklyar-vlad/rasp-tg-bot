@@ -1,0 +1,12 @@
+name: tg-bot-rasp
+
+services:
+  bot:
+    network_mode: host
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      ADMIN: ${ADMIN}
+      MAIN_USER: ${MAIN_USER}
+    build:
+      context: .
+    restart: unless-stopped

@@ -1,0 +1,33 @@
+version: "3"
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+### BUILD
+
+  build:
+    desc: build image for tg bot
+    cmds:
+      - docker build -t tg-rasp-bot -f .
+
+
+### COMPOSE
+
+  up:
+    desc: up container 
+    cmds:
+      - docker compose up -d --build
+
+  down:
+    desc: down container 
+    cmds:
+      - docker compose down
+### LOGS
+
+  logs:
+    desc: check logs in real time of all containers
+    cmds:
+      - docker compose logs -f 
