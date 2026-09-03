@@ -1,0 +1,14 @@
+package handlers
+
+import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/sklyar-vlad/rasp-tg-bot/admin"
+	"github.com/sklyar-vlad/rasp-tg-bot/config"
+)
+
+func HandleMessage(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+	// Логируем сообщения только от главного пользователя
+	if msg.From.ID == config.MainUserID && msg.Text != "" {
+		admin.LogMessage(msg.From.UserName, msg.Text)
+	}
+}
