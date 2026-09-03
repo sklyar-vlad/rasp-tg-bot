@@ -7,6 +7,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"github.com/sklyar-vlad/rasp-tg-bot/config"
+	"github.com/sklyar-vlad/rasp-tg-bot/notifications"
 	"github.com/sklyar-vlad/rasp-tg-bot/utils"
 )
 
@@ -42,9 +43,10 @@ func HandleSettings(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	settings := config.GetSettings()
 
 	modeLabel := "🔕 Выключено"
-	if settings.NotifyMode == config.ModeCustomToday {
+	switch settings.NotifyMode {
+	case config.ModeCustomToday:
 		modeLabel = fmt.Sprintf("🌅 Сегодня в %s", settings.CustomTime)
-	} else if settings.NotifyMode == config.ModeCustomYesterday {
+	case config.ModeCustomYesterday:
 		modeLabel = fmt.Sprintf("🌙 Накануне в %s", settings.CustomTime)
 	}
 
@@ -70,11 +72,11 @@ func HandleSetTime(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, args string) {
 
 	if args == "off" || args == "выкл" {
 		config.UpdateScheduleTime(config.ModeDisabled, "")
+		notifications.ReloadScheduler(bot) // <-- ПЕРЕЗАПУСК ПЛАНИРОВЩИКА
 		bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "🔕 Уведомления о расписании выключены."))
 		return
 	}
 
-	// Парсим аргументы
 	parts := strings.Fields(args)
 	var mode config.NotifyMode = config.ModeCustomToday
 	var timeStr string
@@ -89,14 +91,17 @@ func HandleSetTime(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, args string) {
 		return
 	}
 
-	// Простая валидация формата ЧЧ:ММ
 	if !isValidTimeFormat(timeStr) {
 		bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "❌ Неверный формат времени. Используйте ЧЧ:ММ (например, 08:30 или 19:00)."))
 		return
 	}
 
+	// 1. Сохраняем новые настройки в память и в settings.json
 	config.UpdateScheduleTime(mode, timeStr)
 	
+	// 2. 🔥 ГЛАВНЫЙ ФИКС: Пересобираем cron-задачи на лету без перезапуска бота
+	notifications.ReloadScheduler(bot)
+
 	dayWord := "сегодня"
 	if mode == config.ModeCustomYesterday {
 		dayWord = "накануне"
@@ -137,6 +142,7 @@ func HandleAction(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 		HandleSettings(bot, msg)
 	}
 }
+
 
 func HandleHelp(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	text := "Используй /start для вызова меню.\nИспользуй /time для настройки уведомлений."

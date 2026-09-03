@@ -37,7 +37,7 @@ func LoadSettings() Settings {
 		currentSettings = Settings{
 			NotifyMode:       ModeCustomToday,
 			CustomTime:       "08:00", // Значение по умолчанию
-			DailyMessageTime: "0 10 * * *",
+			DailyMessageTime: "33 03 * * *",
 			DailyMessages: []string{
 				"☀️ Доброе утро! Отличного дня!",
 				"💪 Ты справишься со всем сегодня!",

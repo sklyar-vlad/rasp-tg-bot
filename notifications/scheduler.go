@@ -28,22 +28,25 @@ func rebuildCron(bot *tgbotapi.BotAPI) {
 	cronMu.Lock()
 	defer cronMu.Unlock()
 
+	// 1. Останавливаем старый планировщик, если он есть
 	if cronInstance != nil {
 		cronInstance.Stop()
 	}
 
+	// 2. Создаем новый экземпляр
 	cronInstance = cron.New()
-	settings := config.GetSettings()
+	settings := config.GetSettings() // Берем самые свежие настройки из памяти
 
-	// 1. Задача для расписания (теперь динамическая)
+	// 3. Добавляем задачу для расписания
 	if settings.NotifyMode != config.ModeDisabled && settings.CustomTime != "" {
 		cronExpr := timeToCron(settings.CustomTime)
 		
 		var jobFunc func()
-		if settings.NotifyMode == config.ModeCustomToday {
+		switch settings.NotifyMode {
+		case config.ModeCustomToday:
 			jobFunc = func() { sendScheduleForToday(bot) }
 			log.Printf("⏰ Расписание: сегодня в %s (cron: %s)", settings.CustomTime, cronExpr)
-		} else if settings.NotifyMode == config.ModeCustomYesterday {
+		case config.ModeCustomYesterday:
 			jobFunc = func() { sendScheduleForTomorrow(bot) }
 			log.Printf("⏰ Расписание: накануне в %s (cron: %s)", settings.CustomTime, cronExpr)
 		}
@@ -51,24 +54,25 @@ func rebuildCron(bot *tgbotapi.BotAPI) {
 		if jobFunc != nil {
 			_, err := cronInstance.AddFunc(cronExpr, jobFunc)
 			if err != nil {
-				log.Printf("Ошибка cron (расписание): %v", err)
+				log.Printf("❌ Ошибка cron (расписание): %v", err)
 			}
 		}
 	} else {
 		log.Println("⏰ Уведомления о расписании выключены")
 	}
 
-	// 2. Задача для ежедневных сообщений
+	// 4. Добавляем задачу для ежедневных сообщений (комплименты/уведомления)
 	if len(settings.DailyMessages) > 0 && settings.DailyMessageTime != "" {
 		_, err := cronInstance.AddFunc(settings.DailyMessageTime, func() {
 			sendDailyCustomMessage(bot)
 		})
 		if err != nil {
-			log.Printf("Ошибка cron (daily_message): %v", err)
+			log.Printf("❌ Ошибка cron (daily_message): %v", err)
 		}
 		log.Printf("⏰ Ежедневное сообщение: %s", settings.DailyMessageTime)
 	}
 
+	// 5. Запускаем новый планировщик
 	cronInstance.Start()
 }
 

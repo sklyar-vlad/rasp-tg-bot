@@ -1,26 +1,21 @@
 package config
 
 import (
-	"log"
 	"os"
-
-	"github.com/joho/godotenv"
+	"strconv"
 )
 
-// Загружаем .env при инициализации пакета
-func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("⚠️ Файл .env не найден. Убедитесь, что переменная BOT_TOKEN задана в системе.")
-	}
-}
+var (
+	admin, _ = strconv.Atoi(os.Getenv("ADMIN"))
+	mainUser, _ = strconv.Atoi(os.Getenv("MAIN_USER"))
+)
 
 var AllowedUsers = []int64{
-	5781599483,
-	1436576269,
+	int64(admin),
+	int64(mainUser),
 }
 
 // BotToken теперь читается из переменной окружения, а не зашит в код
 var BotToken = os.Getenv("BOT_TOKEN")
 
-const MainUserID int64 = 5781599483
+var MainUserID int64 = int64(mainUser)
