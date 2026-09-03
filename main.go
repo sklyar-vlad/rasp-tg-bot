@@ -4,6 +4,7 @@ import (
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	_ "time/tzdata"
 
 	"github.com/sklyar-vlad/rasp-tg-bot/admin"
 	"github.com/sklyar-vlad/rasp-tg-bot/bot"
