@@ -4,6 +4,7 @@ services:
   bot:
     network_mode: host
     environment:
+      TZ: Europe/Moscow 
       BOT_TOKEN: ${BOT_TOKEN}
       ADMIN: ${ADMIN}
       MAIN_USER: ${MAIN_USER}
