@@ -19,19 +19,22 @@ func HandleStart(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 		),
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("🗓 Неделя"),
-		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("⚙️ Настройки"),
+			tgbotapi.NewKeyboardButton("💼 Работа"),
 		),
 	)
 	keyboard.ResizeKeyboard = true
 
-	text := fmt.Sprintf(
-		"👋 Привет! Я бот-помощник.\n\n"+
-			"📌 Текущая неделя: *%s*\n\n"+
-			"Выбери, что посмотреть:",
-		utils.WeekLabel(),
-	)
+	text := fmt.Sprintf("*Привет!*\n\n"+
+		"Текущая неделя: *%s*\n\n"+
+		"*Команды:*\n"+
+		"• /start — меню\n"+
+		"• /help — помощь\n"+
+		"• /time 08:30 — уведомление сегодня\n"+
+		"• /time вчера 19:00 — уведомление накануне\n"+
+		"• /time off — выключить уведомления\n\n"+
+		"*Быстрые кнопки:*\n"+
+		"📅 Сегодня, 📆 Завтра, 🗓 Неделя, 💼 Работа",
+		utils.WeekLabel())
 
 	m := tgbotapi.NewMessage(msg.Chat.ID, text)
 	m.ParseMode = "Markdown"
@@ -132,8 +135,8 @@ func HandleAction(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 		sendDayByOffset(bot, msg.Chat.ID, 1)
 	case "🗓 Неделя":
 		sendWeekMenu(bot, msg.Chat.ID)
-	case "⚙️ Настройки":
-		HandleSettings(bot, msg)
+	case "💼 Работа":
+		startWorkShiftSetup(bot, msg.Chat.ID)
 	}
 }
 
