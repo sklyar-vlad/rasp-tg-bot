@@ -85,8 +85,8 @@ func sendDayByOffset(bot *tgbotapi.BotAPI, chatID int64, offsetDays int) {
 		label = "завтра"
 	}
 
-	markdown := schedule.BuildDayMarkdown(dayKey, day, label)
-	if err := schedule.SendDayMarkdown(bot, chatID, markdown); err != nil {
+	blocks := schedule.BuildDayBlocks(dayKey, day, label)
+	if err := schedule.SendDayBlocks(bot, chatID, blocks); err != nil {
 		log.Printf("Ошибка отправки: %v", err)
 	}
 }
@@ -125,8 +125,8 @@ func sendDayWithNav(bot *tgbotapi.BotAPI, chatID int64, dayKey string) {
 		return
 	}
 
-	markdown := schedule.BuildDayMarkdown(dayKey, day, "")
-	if err := schedule.SendDayMarkdown(bot, chatID, markdown); err != nil {
+	blocks := schedule.BuildDayBlocks(dayKey, day, "")
+	if err := schedule.SendDayBlocks(bot, chatID, blocks); err != nil {
 		log.Printf("Ошибка отправки: %v", err)
 		return
 	}
