@@ -109,10 +109,10 @@ func sendWeekByParity(bot *tgbotapi.BotAPI, chatID int64, isEven bool) {
 	if isEven {
 		label = "Чётная неделя"
 	}
-	markdown := schedule.BuildWeekMarkdown(isEven, label)
-	m := tgbotapi.NewMessage(chatID, markdown)
-	m.ParseMode = "Markdown"
-	bot.Send(m)
+	blocks := schedule.BuildWeekBlocks(isEven, label)
+	if err := schedule.SendWeekBlocks(bot, chatID, blocks); err != nil {
+		log.Printf("Ошибка отправки: %v", err)
+	}
 }
 
 func sendDayWithNav(bot *tgbotapi.BotAPI, chatID int64, dayKey string) {
