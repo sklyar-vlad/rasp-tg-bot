@@ -95,13 +95,16 @@ func sendScheduleForToday(bot *tgbotapi.BotAPI) {
 	dayKey := todayKey()
 	sched := schedule.GetSchedule()
 	day, ok := sched[dayKey]
-	if !ok || len(day.Events) == 0 {
+	if !ok {
+		return
+	}
+	if len(day.Events) == 0 {
 		bot.Send(tgbotapi.NewMessage(config.MainUserID, "🎉 Сегодня пар нет! Отдыхай."))
 		return
 	}
 
-	markdown := schedule.BuildDayMarkdown(day, "ежедневное")
-	if err := schedule.SendDayMarkdown(bot, config.MainUserID, markdown); err != nil {
+	blocks := schedule.BuildDayBlocks(dayKey, day, "ежедневное")
+	if err := schedule.SendDayBlocks(bot, config.MainUserID, blocks); err != nil {
 		log.Printf("Ошибка отправки расписания: %v", err)
 	}
 }
@@ -132,8 +135,8 @@ func sendScheduleForTomorrow(bot *tgbotapi.BotAPI) {
 		return
 	}
 
-	markdown := schedule.BuildDayMarkdown(day, "на завтра")
-	if err := schedule.SendDayMarkdown(bot, config.MainUserID, markdown); err != nil {
+	blocks := schedule.BuildDayBlocks(dayKey, day, "на завтра")
+	if err := schedule.SendDayBlocks(bot, config.MainUserID, blocks); err != nil {
 		log.Printf("Ошибка отправки расписания: %v", err)
 	}
 }

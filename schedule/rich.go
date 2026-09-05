@@ -5,52 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
-	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/sklyar-vlad/rasp-tg-bot/work"
 )
-
-// ==========================================
-// ВАРИАНТ 1: Markdown (Идеально для Сегодня/Завтра/Одного дня)
-// ==========================================
-
-type RichMessageMarkdownRequest struct {
-	ChatID      int64               `json:"chat_id"`
-	RichMessage RichMessageMarkdown `json:"rich_message"`
-}
-
-type RichMessageMarkdown struct {
-	Markdown string `json:"markdown"`
-}
-
-func BuildDayMarkdown(day DaySchedule, label string) string {
-	title := fmt.Sprintf("### 📆 %s", day.Name)
-	if label != "" {
-		title = fmt.Sprintf("### 📆 %s (%s)", day.Name, label)
-	}
-
-	var sb strings.Builder
-	sb.WriteString(title)
-	sb.WriteString("\n\n")
-	sb.WriteString("| Пара | Занятие | Аудитория |\n| :--- | :--- | :--- |\n")
-	for _, ev := range day.Events {
-		sb.WriteString(fmt.Sprintf("| **%s** | %s | %s |\n", ev.Time, ev.Subject, ev.Location))
-	}
-	return sb.String()
-}
-
-func SendDayMarkdown(bot *tgbotapi.BotAPI, chatID int64, markdown string) error {
-	payload := RichMessageMarkdownRequest{
-		ChatID:      chatID,
-		RichMessage: RichMessageMarkdown{Markdown: markdown},
-	}
-	return sendRichPayload(bot, payload)
-}
-
-// ==========================================
-// ВАРИАНТ 2: Blocks (Идеально для Недели с выпадающими списками)
-// ==========================================
 
 type RichMessageBlocksRequest struct {
 	ChatID      int64             `json:"chat_id"`
@@ -63,74 +21,130 @@ type RichMessageBlocks struct {
 
 type Block struct {
 	Type       string   `json:"type"`
-	Summary    string   `json:"summary,omitempty"` // Заголовок для details
-	Blocks     []Block  `json:"blocks,omitempty"`  // Вложенные блоки для details
-	Cells      [][]Cell `json:"cells,omitempty"`   // Ячейки для table
+	Summary    string   `json:"summary,omitempty"`
+	Blocks     []Block  `json:"blocks,omitempty"`
+	Cells      [][]Cell `json:"cells,omitempty"`
 	IsBordered bool     `json:"is_bordered,omitempty"`
+	IsCompact  bool     `json:"is_compact,omitempty"`
 	IsStriped  bool     `json:"is_striped,omitempty"`
-	Text       string   `json:"text,omitempty"` // Текст для paragraph (без Markdown!)
+	Text       string   `json:"text,omitempty"`
 }
 
 type Cell struct {
 	Text string `json:"text"`
 }
 
-func BuildWeekBlocks() []Block {
-	var blocks []Block
-
-	// ✅ ИСПОЛЬЗУЕМ НАШУ ФУНКЦИЮ ВМЕСТО ISOWeek
-	isEven := isEvenWeek()
-	weekType := "нечётная"
-	if isEven {
-		weekType = "чётная"
+func BuildDayBlocks(dayKey string, day DaySchedule, label string) []Block {
+	title := fmt.Sprintf("📆 %s", day.Name)
+	if label != "" {
+		title = fmt.Sprintf("📆 %s (%s)", day.Name, label)
 	}
 
-	// Вычисляем академический номер недели для красоты (от 1 сентября 2024)
-	startDate := time.Date(2026, 9, 1, 0, 0, 0, 0, time.Local)
-	daysPassed := int(time.Since(startDate).Hours() / 24)
-	academicWeek := (daysPassed / 7) + 1
+	blocks := []Block{{Type: "paragraph", Text: title}}
 
-	// Общий заголовок недели
-	blocks = append(blocks, Block{
-		Type: "paragraph",
-		Text: fmt.Sprintf("📆 Неделя (%s) • %d", weekType, academicWeek),
-	})
-
-	sched := GetSchedule()
-
-	for _, dayKey := range DayOrder {
-		day, exists := sched[dayKey]
-		if !exists || len(day.Events) == 0 {
-			continue
-		}
-
-		var cells [][]Cell
-		cells = append(cells, []Cell{{Text: "Пара"}, {Text: "Занятие"}, {Text: "Аудитория"}})
-
+	workRows := work.GetShiftsForDay(dayKey)
+	if len(day.Events) > 0 {
+		classCells := [][]Cell{{{Text: "Время"}, {Text: "Предмет"}, {Text: "Место"}}}
 		for _, ev := range day.Events {
-			cells = append(cells, []Cell{
+			classCells = append(classCells, []Cell{
 				{Text: ev.Time},
 				{Text: ev.Subject},
 				{Text: ev.Location},
 			})
 		}
-
-		// Оборачиваем таблицу в выпадающий список.
 		blocks = append(blocks, Block{
-			Type:    "details",
-			Summary: fmt.Sprintf("%s · %d пар", day.Name, len(day.Events)),
-			Blocks: []Block{
-				{
-					Type:       "table",
-					IsBordered: true,
-					IsStriped:  true,
-					Cells:      cells,
-				},
-			},
+			Type:       "table",
+			Cells:      classCells,
+			IsBordered: true,
+			IsCompact:  true,
+		})
+	}
+
+	if len(workRows) > 0 {
+		workCells := [][]Cell{{{Text: "Время"}, {Text: "Место"}}}
+		for _, shift := range workRows {
+			workCells = append(workCells, []Cell{
+				{Text: shift.Time},
+				{Text: shift.Location},
+			})
+		}
+		blocks = append(blocks, Block{
+			Type:       "table",
+			Cells:      workCells,
+			IsBordered: true,
+			IsCompact:  true,
 		})
 	}
 
 	return blocks
+}
+
+func BuildWeekBlocks(isEven bool, label string) []Block {
+	sched := GetScheduleForWeek(isEven)
+	blocks := []Block{{Type: "paragraph", Text: label}}
+
+	for _, dayKey := range DayOrder {
+		day, ok := sched[dayKey]
+		if !ok {
+			continue
+		}
+		workRows := work.GetShiftsForDay(dayKey)
+		if len(day.Events) == 0 && len(workRows) == 0 {
+			continue
+		}
+
+		dayBlocks := []Block{}
+		if len(day.Events) > 0 {
+			classCells := [][]Cell{{{Text: "Время"}, {Text: "Предмет"}, {Text: "Место"}}}
+			for _, ev := range day.Events {
+				classCells = append(classCells, []Cell{
+					{Text: ev.Time},
+					{Text: ev.Subject},
+					{Text: ev.Location},
+				})
+			}
+			dayBlocks = append(dayBlocks, Block{
+				Type:       "table",
+				Cells:      classCells,
+				IsBordered: true,
+				IsCompact:  true,
+				IsStriped:  true,
+			})
+		}
+
+		if len(workRows) > 0 {
+			workCells := [][]Cell{{{Text: "Время"}, {Text: "Место"}}}
+			for _, shift := range workRows {
+				workCells = append(workCells, []Cell{
+					{Text: shift.Time},
+					{Text: shift.Location},
+				})
+			}
+			dayBlocks = append(dayBlocks, Block{
+				Type:       "table",
+				Cells:      workCells,
+				IsBordered: true,
+				IsCompact:  true,
+				IsStriped:  true,
+			})
+		}
+
+		blocks = append(blocks, Block{
+			Type:    "details",
+			Summary: day.Name,
+			Blocks:  dayBlocks,
+		})
+	}
+
+	return blocks
+}
+
+func SendDayBlocks(bot *tgbotapi.BotAPI, chatID int64, blocks []Block) error {
+	payload := RichMessageBlocksRequest{
+		ChatID:      chatID,
+		RichMessage: RichMessageBlocks{Blocks: blocks},
+	}
+	return sendRichPayload(bot, payload)
 }
 
 func SendWeekBlocks(bot *tgbotapi.BotAPI, chatID int64, blocks []Block) error {
@@ -140,10 +154,6 @@ func SendWeekBlocks(bot *tgbotapi.BotAPI, chatID int64, blocks []Block) error {
 	}
 	return sendRichPayload(bot, payload)
 }
-
-// ==========================================
-// Общая функция отправки
-// ==========================================
 
 func sendRichPayload(bot *tgbotapi.BotAPI, payload interface{}) error {
 	jsonData, err := json.Marshal(payload)
